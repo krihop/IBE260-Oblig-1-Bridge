@@ -9,7 +9,7 @@
 - Provides endpoints for restarting the game and listing players in teams
 
 ### Pre-req
-Node.js and npm
+[Node.js](https://nodejs.org/en/download) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (included with Node.js)
 
 ### How to use
 
@@ -19,6 +19,6 @@ Node.js and npm
 
 3. Start the server `node .\dist\app.js`
 
-4. Server runs on port 3000
+4. Server runs on port [3000](http://localhost:3000)
 
 5. Use Postman for HTTP requests, check api.rest
