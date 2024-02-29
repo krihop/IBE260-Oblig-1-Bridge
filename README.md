@@ -17,9 +17,8 @@ Node.js and npm
 
 2. Install dependencies: `npm install`
 
-3. Start the server `node src/app.ts`
+3. Start the server `node .\dist\app.js`
 
 4. Server runs on port 3000
 
 5. Use Postman for HTTP requests, check api.rest
-
