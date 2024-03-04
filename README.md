@@ -1,7 +1,7 @@
 # IBE260-Oblig-1-Bridge
-Av Kristoffer og Stine
+By Kristoffer og Stine
 ### Features
-git push origin main
+
 - Minimalistic implementation
 - Supports creating a new Bridge game
 - Allows adding players to the game
@@ -17,8 +17,8 @@ git push origin main
 
 2. Install dependencies: `npm install`
 
-3. Start the server `node .\dist\app.js`
+3. Start the server `npm run start`
 
 4. Server runs on port [3000](http://localhost:3000)
 
-5. Use Postman for HTTP requests, check api.rest
+5. Use [Postman](https://www.postman.com/downloads) for HTTP requests, check api.rest
