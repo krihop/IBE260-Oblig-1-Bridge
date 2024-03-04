@@ -1,7 +1,7 @@
 # IBE260-Oblig-1-Bridge
-
+Av Kristoffer og Stine
 ### Features
-
+git push origin main
 - Minimalistic implementation
 - Supports creating a new Bridge game
 - Allows adding players to the game
