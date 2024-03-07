@@ -31,12 +31,15 @@ const interval = setInterval(() => {
         // Start the express server
         app.listen(port, () => {
             console.log(`\x1b[32m💕 Bridge 🌉 game 🎮 server 💻 is running 🏃 at http://localhost:${port}\x1b[0m`);
-            console.log('\x1b[31mI Norge anses private gamblingaktiviteter utført uten riktig autorisasjon fra Lotteritilsynet som ulovlige i henhold til Lov om pengespill (pengespilloven).\nDette inkluderer organisering eller deltakelse i uautoriserte gamblingarrangementer eller tjenester utenfor lisensierte arenaer eller plattformer.\nÅ delta i slike aktiviteter kan føre til juridiske konsekvenser og straffer.\x1b[0m');
         });
     }
 }, progressInterval);
 // Example: in-memory storage for bridge game state
 let game = null;
+let isFirstBid = true; // Flag to track if it's the first bid in the game
+// Declare variables for dealer and current player index
+let dealerIndex = 0; // Index of the dealer in the players array
+let currentPlayerIndex = (dealerIndex + 1) % 4; // Index of the player to the left of the dealer
 // Function to deal cards to players
 function dealCards() {
     // Create a standard deck of 52 cards
@@ -67,25 +70,33 @@ app.post('/bridge/create', (req, res) => {
         hands: [],
         // Add other properties as needed for your game
     };
+    // Log the creation of a new bridge game
+    console.log('Bridge game created successfully');
     res.status(201).json({ message: 'Bridge game created successfully' });
 });
-// Route to add a player to the bridge game
-app.post('/bridge/add-player', (req, res) => {
-    const playerName = req.body.playerName;
-    if (!playerName) {
-        return res.status(400).json({ error: 'Player name is required' });
-    }
+// Route to add players to the bridge game
+app.post('/bridge/add-players', (req, res) => {
+    const playerNames = req.body.players;
     // Check if the game exists
     if (!game) {
         return res.status(404).json({ error: 'Bridge game not found. Create a game first.' });
     }
-    // Add the player to the game
-    game.players.push({ name: playerName });
+    // Check if player names are provided
+    if (!playerNames || !Array.isArray(playerNames) || playerNames.length === 0) {
+        return res.status(400).json({ error: 'Player names must be provided as a non-empty array.' });
+    }
+    // Add players to the game
+    for (const playerName of playerNames) {
+        game.players.push({ name: playerName });
+        // Log the added player
+        console.log('Player added to the game:', playerName);
+    }
     // Deal cards if all players have joined
     if (game.players.length === 4) {
         dealCards();
     }
-    res.status(200).json({ message: `${playerName} added to the game` });
+    // Respond with success message
+    res.status(200).json({ message: 'Players added successfully' });
 });
 // Route to list players in the current game
 app.get('/bridge/list-players', (req, res) => {
@@ -100,10 +111,21 @@ app.get('/bridge/list-players', (req, res) => {
     // Respond with the list of players
     res.status(200).json({ players: game.players });
 });
+// Function to validate a bid
+function isValidBid(bid, suit) {
+    if (bid < 1 || bid > 7) {
+        return false; // Bid level out of range
+    }
+    if (suit && !['Spades', 'Hearts', 'Diamonds', 'Clubs'].includes(suit)) {
+        return false; // Invalid suit
+    }
+    return true; // Valid bid
+}
 // Route to allow a player to make a bid
 app.post('/bridge/bid', (req, res) => {
     const playerName = req.body.playerName;
     const bid = req.body.bid;
+    const suit = req.body.suit;
     // Check if the game exists
     if (!game) {
         return res.status(404).json({ error: 'Bridge game not found. Create a game first.' });
@@ -113,25 +135,41 @@ app.post('/bridge/bid', (req, res) => {
     if (playerIndex === -1) {
         return res.status(404).json({ error: 'Player not found in the game' });
     }
-    // Get the player's index in the rotation (0-based)
-    const playerRotationIndex = playerIndex % 4;
-    // Check if the player is the second one after the opener
-    if (playerRotationIndex === 1) {
-        // Logic to check if the player's hand meets the criteria for bidding
-        // Implement the logic based on the specified rule
-        // For now, let's assume the player always meets the criteria
-        const meetsCriteria = true;
-        if (meetsCriteria) {
-            // Respond with a bid
-            res.status(200).json({ message: `${playerName} made a bid of ${bid}` });
-        }
-        else {
-            // Respond with a pass
-            res.status(200).json({ message: `${playerName} passed` });
-        }
+    // Log whose turn it is to bid
+    const currentTurnPlayer = game.players[currentPlayerIndex].name;
+    console.log(`It's ${currentTurnPlayer}'s turn to bid.`);
+    // Check if it's the player's turn to bid
+    if (playerIndex !== currentPlayerIndex) {
+        return res.status(400).json({ error: `It is not your turn to bid. It's ${currentTurnPlayer}'s turn.` });
+    }
+    // If it's the first bid, log who should start
+    if (isFirstBid) {
+        const startingPlayer = game.players[currentPlayerIndex].name;
+        console.log(`The first bid should be made by: ${startingPlayer}`);
+        isFirstBid = false; // Update the flag
+    }
+    // Logic to check if the bid is valid
+    if (isValidBid(bid, suit)) {
+        // Log the bid in the terminal
+        const message = `${playerName} made a bid of ${bid} ${suit ? 'in ' + suit : 'in NT'}`;
+        console.log(message);
+        // Move to the next player in the rotation
+        currentPlayerIndex = (currentPlayerIndex + 1) % 4;
+        // Log whose turn it is next
+        const nextPlayer = game.players[currentPlayerIndex].name;
+        console.log(`Next turn: ${nextPlayer}`);
+        // Respond with the bid
+        res.status(200).json({ message });
     }
     else {
-        // Player is not the second one after the opener, so respond with a pass
+        // Log the pass in the terminal
+        console.log(`${playerName} passed`);
+        // Move to the next player in the rotation
+        currentPlayerIndex = (currentPlayerIndex + 1) % 4;
+        // Log whose turn it is next
+        const nextPlayer = game.players[currentPlayerIndex].name;
+        console.log(`Next turn: ${nextPlayer}`);
+        // Respond with a pass
         res.status(200).json({ message: `${playerName} passed` });
     }
 });
