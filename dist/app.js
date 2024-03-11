@@ -40,7 +40,32 @@ let isFirstBid = true; // Flag to track if it's the first bid in the game
 // Declare variables for dealer and current player index
 let dealerIndex = 0; // Index of the dealer in the players array
 let currentPlayerIndex = (dealerIndex + 1) % 4; // Index of the player to the left of the dealer
-// Function to deal cards to players
+// High-Card Points (HCP)
+function calculateHighCardPoints(hand) {
+    // Assign points to each card rank and sum them up
+    let points = 0;
+    for (const card of hand) {
+        switch (card.rank) {
+            case 'Ace':
+                points += 4;
+                break;
+            case 'King':
+                points += 3;
+                break;
+            case 'Queen':
+                points += 2;
+                break;
+            case 'Jack':
+                points += 1;
+                break;
+            default:
+                // Other ranks contribute no points
+                break;
+        }
+    }
+    return points;
+}
+// Deal cards to players
 function dealCards() {
     // Create a standard deck of 52 cards
     const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
@@ -85,6 +110,11 @@ app.post('/bridge/add-players', (req, res) => {
     if (!playerNames || !Array.isArray(playerNames) || playerNames.length === 0) {
         return res.status(400).json({ error: 'Player names must be provided as a non-empty array.' });
     }
+    // Check if adding new players will exceed the maximum limit
+    const totalPlayers = game.players.length + playerNames.length;
+    if (totalPlayers > 4) {
+        return res.status(400).json({ error: 'Maximum number of players (4) reached.' });
+    }
     // Add players to the game
     for (const playerName of playerNames) {
         game.players.push({ name: playerName });
@@ -111,7 +141,7 @@ app.get('/bridge/list-players', (req, res) => {
     // Respond with the list of players
     res.status(200).json({ players: game.players });
 });
-// Function to validate a bid
+// Validate a bid
 function isValidBid(bid, suit) {
     if (bid < 1 || bid > 7) {
         return false; // Bid level out of range
@@ -147,6 +177,34 @@ app.post('/bridge/bid', (req, res) => {
         const startingPlayer = game.players[currentPlayerIndex].name;
         console.log(`The first bid should be made by: ${startingPlayer}`);
         isFirstBid = false; // Update the flag
+    }
+    // Check if the current player is player number 2
+    if (playerIndex === (dealerIndex + 2) % 4) {
+        const hand = game.hands[playerIndex];
+        const suits = ['Clubs', 'Diamonds', 'Hearts', 'Spades', 'NT'];
+        for (let i = 0; i < suits.length - 1; i++) {
+            const suit = suits[i];
+            const nextSuit = suits[i + 1];
+            const suitLength = hand.filter((card) => card.suit === suit).length;
+            const nextSuitLength = hand.filter((card) => card.suit === nextSuit).length;
+            const hp = calculateHighCardPoints(hand);
+            if (suitLength >= 5 && hp >= 8) {
+                // Make the bid at one-level
+                const bidLevel = i + 1;
+                const bidSuit = suit;
+                const message = `${game.players[playerIndex].name} made a bid of ${bidLevel} ${bidSuit}`;
+                console.log(message);
+                break;
+            }
+            else if (nextSuitLength >= 5 && hp >= 10) {
+                // Make the bid at two-level
+                const bidLevel = i + 2;
+                const bidSuit = nextSuit;
+                const message = `${game.players[playerIndex].name} made a bid of ${bidLevel} ${bidSuit}`;
+                console.log(message);
+                break;
+            }
+        }
     }
     // Logic to check if the bid is valid
     if (isValidBid(bid, suit)) {

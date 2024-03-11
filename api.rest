@@ -16,19 +16,11 @@ POST http://localhost:3000/bridge/bid
 Content-Type: application/json
 
 {
-  "playerName": "Kristoffer",
-  "bid": 3
+  "playerName": "Stine",
+  "bid": "3"
 }
 
 ###
-
-POST http://localhost:3000/bridge/bid
-Content-Type: application/json
-
-{
-  "playerName": "Stine",
-  "bid": 5
-}
 
 GET http://localhost:3000/bridge/list-players
 Content-Type: application/json
